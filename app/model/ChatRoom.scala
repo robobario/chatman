@@ -10,14 +10,14 @@ import play.api.Play.current
 import akka.util.Timeout
 import akka.pattern._
 
-object ChatRoom {
+object ChatRooms {
 
   implicit val timeout = Timeout(1 second)
 
   lazy val default = {
-    val roomActor = Akka.system.actorOf(Props[ChatRoom])
+    val roomsActor = Akka.system.actorOf(Props[ChatRooms])
 
-    roomActor
+    roomsActor
   }
 
 }
@@ -25,55 +25,80 @@ object ChatRoom {
 object Member {
   implicit val timeout = Timeout(1 second)
 
-  def join(username:String, chatroom : ActorRef):Promise[(Iteratee[Array[Byte],_],Enumerator[Array[Byte]])] = {
-    val enumerator: PushEnumerator[Array[Byte]] = Enumerator.imperative[Array[Byte]]()
-    val member = Akka.system.actorOf(Props(new Member(chatroom, enumerator)))
-    println("shit")
-    (chatroom ? Join(username,member)).map {
+  def join(chatroomName:String):Promise[(Iteratee[Array[Byte],_],Enumerator[Array[Byte]])] = {
+    (ChatRooms.default ? Get(chatroomName)).flatMap {
+      case Chatroom(chatroom) => {
+          val enumerator: PushEnumerator[Array[Byte]] = Enumerator.imperative[Array[Byte]]()
+          val member = Akka.system.actorOf(Props(new Member(chatroom, enumerator)))
+          (chatroom ? Join(member)).map {
 
-      case Connected() =>
-        // Create an Iteratee to consume the feed
-        val iteratee = Iteratee.foreach[Array[Byte]] { message =>
-          chatroom ! Talk(username, message)
+          case Connected() =>
+          // Create an Iteratee to consume the feed
+          val iteratee = Iteratee.foreach[Array[Byte]] { message =>
+          chatroom ! Talk( message)
         }.mapDone { _ =>
-          chatroom ! Quit(username)
+          chatroom ! Quit(member)
         }
 
-        (iteratee,enumerator)
+          (iteratee,enumerator)
 
-      case CannotConnect(error) =>
-        // A finished Iteratee sending EOF
-        val iteratee = Done[Array[Byte],Unit]((),Input.EOF)
+          case CannotConnect(error) =>
+          // A finished Iteratee sending EOF
+          val iteratee = Done[Array[Byte],Unit]((),Input.EOF)
 
-        // Send an error and close the socket
-        val enumerator =  Enumerator[Array[Byte]]().andThen(Enumerator.enumInput(Input.EOF))
+          // Send an error and close the socket
+          val enumerator =  Enumerator[Array[Byte]]().andThen(Enumerator.enumInput(Input.EOF))
 
-        (iteratee,enumerator)
+          (iteratee,enumerator)
 
-    }.asPromise
-  }
+        }
+      }
+    }
+  }.asPromise
 }
 
 class Member(chatRoom:ActorRef, outPut:PushEnumerator[Array[Byte]]) extends Actor {
     def receive = {
         case t:Talk => {
-          println("shit")
           outPut.push(t.image)
         }
     }
 }
 
-class ChatRoom extends Actor {
+class ChatRooms extends Actor {
 
-  var members = Map.empty[String, ActorRef]
+  var chatrooms = Map.empty[String, ActorRef]
 
   def receive = {
-    case Join(username,ref) => {
+    case Get(chatroomName) => {
       // Create an Enumerator to write to this socket
-      if(members.contains(username)) {
-        sender ! CannotConnect("This username is already used")
+      if(chatrooms.contains(chatroomName)) {
+        sender ! Chatroom(chatrooms(chatroomName))
       } else {
-        members = members + (username -> ref)
+        val chatroom: ActorRef = context.actorOf(Props(new ChatRoom(self, chatroomName)))
+        chatrooms = chatrooms + (chatroomName -> chatroom)
+
+        sender ! Chatroom(chatroom)
+      }
+    }
+    case Empty(chatroomName) => {
+      chatrooms = chatrooms - chatroomName
+    }
+  }
+
+}
+
+class ChatRoom(rooms:ActorRef, name:String) extends Actor {
+
+  var members:List[ActorRef] = Nil
+
+  def receive = {
+    case Join(ref) => {
+      // Create an Enumerator to write to this socket
+      if(members.contains(ref)) {
+        sender ! CannotConnect("already connected")
+      } else {
+        members = ref :: members
 
         sender ! Connected()
       }
@@ -83,22 +108,28 @@ class ChatRoom extends Actor {
       notifyAll(t)
     }
 
-    case Quit(username) => {
-      members = members - username
+    case Quit(ref) => {
+      members = members.filterNot(_ == ref)
+      if(members.size == 0){
+        rooms ! Empty(name)
+      }
     }
 
   }
 
   def notifyAll(message : Talk) {
     members.foreach {
-      case (_, ref) => println("wootzer"); ref ! message
+      _ ! message
     }
   }
 
 }
 
-case class Join(username: String, ref: ActorRef)
-case class Quit(username: String)
-case class Talk(username: String, image: Array[Byte])
+case class Join( ref: ActorRef)
+case class Get(chatroomName: String)
+case class Chatroom(chatroom: ActorRef)
+case class Empty(name: String)
+case class Quit(ref:ActorRef)
+case class Talk(image: Array[Byte])
 case class Connected()
 case class CannotConnect(msg: String)

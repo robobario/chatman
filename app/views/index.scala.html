@@ -1,7 +1,20 @@
-@(message: String)
+@(chatroomName:String)
 
-@main("Welcome to Play 2.0") {
-    
-    @play20.welcome(message)
-    
+@main("drawshit") {
+<head>
+    <script type="text/javascript">
+        window.chatroomName = '@chatroomName'
+    </script>
+</head>
+
+<div id="drawins">
+
+</div>
+<div id="painter">
+    <canvas id="canvas" width="300" height="300" style="border:solid;float:left"></canvas>
+
+</div>
+<div>
+    <a id="send" href = "#">SEND</a>
+</div>
 }

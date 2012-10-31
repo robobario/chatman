@@ -8,14 +8,16 @@ import model.{ChatRoom, Member}
 
 object Application extends Controller {
 
-  def index = WebSocket.using[Array[Byte]] { request =>
-    val out = Enumerator.imperative[Array[Byte]]()
-    val in = Iteratee.foreach[Array[Byte]](doThing(out)).mapDone(_ => println("Disconnected"))
-    (in, out)
+  def default() = Action { request =>
+    Ok(views.html.index("default"))
   }
 
-  def chat(username: String) = WebSocket.async[Array[Byte]] { request =>
-    Member.join(username, ChatRoom.default)
+  def index(chatroom: String) = Action { request =>
+    Ok(views.html.index(chatroom))
+  }
+
+  def chat(chatroom: String) = WebSocket.async[Array[Byte]] { request =>
+    Member.join(chatroom)
   }
 
 
