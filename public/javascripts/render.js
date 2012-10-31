@@ -171,4 +171,8 @@ $(function () {
         window.last = data;
         connection.send(buffer);
     })
+
+    $("#clear").click(function () {
+        context.fillRect(0, 0, canvas.width, canvas.height);
+    })
 })
