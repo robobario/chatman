@@ -5,6 +5,8 @@
 # Home page
 GET     /                           controllers.Application.default
 
+GET     /crossdomain.xml                            controllers.Assets.at(path="/public", file="/crossdomain.xml")
+
 GET     /:chatroom                           controllers.Application.index(chatroom)
 
 GET     /ws/:chatroom                 controllers.Application.chat(chatroom)

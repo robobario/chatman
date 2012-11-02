@@ -3,19 +3,21 @@
 @main("drawshit") {
 <head>
     <script type="text/javascript">
+        WEB_SOCKET_SWF_LOCATION = "assets/WebSocketMain.swf";
         window.chatroomName = '@chatroomName'
+        window.WEB_SOCKET_DEBUG = true
     </script>
+    <script src="@routes.Assets.at("javascripts/swfobject.js")" type="text/javascript"></script>
+    <script src="@routes.Assets.at("javascripts/web_socket.js")" type="text/javascript"></script>
 </head>
-
+<div id="painter" style="width:320px;float:left">
+    <canvas id="canvas" width="300" height="300" style="border:solid"></canvas>
+    <div>
+        <a id="send" href = "#">SEND</a>
+        <a id="clear" href = "#">CLEAR</a>
+    </div>
+</div>
 <div id="drawins">
 
-</div>
-<div id="painter">
-    <canvas id="canvas" width="300" height="300" style="border:solid;float:left"></canvas>
-
-</div>
-<div>
-    <a id="send" href = "#">SEND</a>
-    <a id="clear" href = "#">CLEAR</a>
 </div>
 }

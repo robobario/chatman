@@ -8,17 +8,17 @@ $(function () {
     }
     new_uri += "//" + loc.host;
     new_uri += "/ws/" + window.chatroomName;
-
+    setTimeout(function(){
     var connection = new WebSocket(new_uri);
     connection.binaryType = "arraybuffer";
     connection.onmessage = function (e) {
         var data = e.data;
         var canvasDiv = $('#drawins');
         var canvas = $("<canvas>");
-        canvas.appendTo(canvasDiv);
+        canvas.prependTo(canvasDiv);
         canvas.attr('width', 300);
-        canvas.css('border', 'solid');
         canvas.attr('height', 300);
+        canvas.css('float', 'left');
         var context = canvas[0].getContext("2d");
         var buf = context.createImageData(300, 300);
         var ints = buf.data;
@@ -84,6 +84,10 @@ $(function () {
 
         canvas.width = canvas.width;
         context.putImageData(buf, 0, 0);
+        canvas.click(function(){
+            var pad = $("#canvas")[0];
+            pad.getContext("2d").putImageData(context.getImageData(0,0,300,300),0,0);
+        })
     }
     var canvas = $("#canvas")[0];
     var context = canvas.getContext("2d");
@@ -91,16 +95,16 @@ $(function () {
     context.fillStyle = 'rgb(255, 255, 255)';
     context.fillRect(0, 0, canvas.width, canvas.height);
 
-    var lastX = -1;
-    var lastY = -1;
+    var lastX = -20;
+    var lastY = -20;
     var mouseDown = false;
     var lines = new Array();
     var paint;
 
     function addClick(x, y, dragging) {
-        if (dragging && lastX != -1 && lastY != -1) {
+        if (dragging && lastX > 0 && lastY > 0) {
             lines.push([lastX, lastY, x, y]);
-        } else if (!dragging) {
+        } else if (!dragging && lastX > 0 && lastY > 0) {
             lines.push([lastX - 1, lastY, lastX, lastY]);
         }
         lastX = x;
@@ -158,14 +162,14 @@ $(function () {
         var ints = new Uint8Array(buffer);
         var p1, p2, p3, p4, p5, p6, p7, p8;
         for (var i = 0; i < data.length; i = i + 32) {
-            p1 = data[i] == 0 ? 1 : 0;
-            p2 = data[i + 4] == 0 ? 2 : 0;
-            p3 = data[i + 2 * 4] == 0 ? 4 : 0;
-            p4 = data[i + 3 * 4] == 0 ? 8 : 0;
-            p5 = data[i + 4 * 4] == 0 ? 16 : 0;
-            p6 = data[i + 5 * 4] == 0 ? 32 : 0;
-            p7 = data[i + 6 * 4] == 0 ? 64 : 0;
-            p8 = data[i + 7 * 4] == 0 ? 128 : 0;
+            p1 = data[i] != 255 ? 1 : 0;
+            p2 = data[i + 4]!= 255 ? 2 : 0;
+            p3 = data[i + 2 * 4] != 255 ? 4 : 0;
+            p4 = data[i + 3 * 4] != 255 ? 8 : 0;
+            p5 = data[i + 4 * 4] != 255 ? 16 : 0;
+            p6 = data[i + 5 * 4] != 255 ? 32 : 0;
+            p7 = data[i + 6 * 4] != 255 ? 64 : 0;
+            p8 = data[i + 7 * 4] != 255 ? 128 : 0;
             ints[i / 32] = p1 | p2 | p3 | p4 | p5 | p6 | p7 | p8;
         }
         window.last = data;
@@ -175,4 +179,5 @@ $(function () {
     $("#clear").click(function () {
         context.fillRect(0, 0, canvas.width, canvas.height);
     })
+    },1000)
 })
