@@ -16,8 +16,7 @@ object Application extends Controller {
     Ok(views.html.index(chatroom))
   }
 
-  def chat(chatroom: String) = WebSocket.async[Array[Byte]] { request =>
-    println("hi")
+  def chat(chatroom: String) = WebSocket.async[Either[String,Array[Byte]]] { request =>
     Member.join(chatroom)
   }
 

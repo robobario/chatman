@@ -1,6 +1,7 @@
 @(chatroomName:String)
 
-@main("drawshit") {
+@main("a drawing game | drawshit.com") {
+
 <head>
     <script type="text/javascript">
         WEB_SOCKET_SWF_LOCATION = "assets/WebSocketMain.swf";
@@ -10,14 +11,26 @@
     <script src="@routes.Assets.at("javascripts/swfobject.js")" type="text/javascript"></script>
     <script src="@routes.Assets.at("javascripts/web_socket.js")" type="text/javascript"></script>
 </head>
-<div id="painter" style="width:320px;float:left">
-    <canvas id="canvas" width="300" height="300" style="border:solid"></canvas>
-    <div>
-        <a id="send" href = "#">SEND</a>
-        <a id="clear" href = "#">CLEAR</a>
+
+<div id="header">
+    <div style="margin-right: auto;margin-left: auto;width: 96%">
+        <span><h6>draw shit ▼</h6></span>
+        <span id="onlineCount"class="floatRight whiteText"></span><span id="memberCount" class="floatRight whiteText">online : </span>
     </div>
 </div>
-<div id="drawins">
+<div style="margin-right: auto;margin-left: auto;width: 96%;margin-top:10px">
 
+<div style="width:100%">
+    <div id="painter" style="width:350px;float:left">
+        <canvas id="canvas" width="300" height="300"></canvas>
+        <div id="canvas-buttons">
+            <button id="send" href = "#">send</button>
+            <button id="clear" href = "#">clear</button>
+        </div>
+    </div>
+    <div id="drawins">
+
+    </div>
+</div>
 </div>
 }

@@ -1,5 +1,5 @@
 $(function () {
-
+    var onlinePrefix = "$DRAWSHIT$online$";
     var loc = window.location, new_uri;
     if (loc.protocol === "https:") {
         new_uri = "wss:";
@@ -11,83 +11,95 @@ $(function () {
     setTimeout(function(){
     var connection = new WebSocket(new_uri);
     connection.binaryType = "arraybuffer";
+    connection.onopen = function(){
+        setInterval(function(){connection.send("ping")},5000);
+        connection.send(onlinePrefix);
+    }
     connection.onmessage = function (e) {
         var data = e.data;
-        var canvasDiv = $('#drawins');
-        var canvas = $("<canvas>");
-        canvas.prependTo(canvasDiv);
-        canvas.attr('width', 300);
-        canvas.attr('height', 300);
-        canvas.css('float', 'left');
-        var context = canvas[0].getContext("2d");
-        var buf = context.createImageData(300, 300);
-        var ints = buf.data;
+        if(typeof data === "string"){
+            console.log(data)
+            if(data.indexOf(onlinePrefix) > -1){
+                $("#onlineCount").text(data.substring(onlinePrefix.length))
+            }
+        }else {
+            var canvasDiv = $('#drawins');
+            var canvas = $("<canvas>");
+            canvas.prependTo(canvasDiv);
+            canvas.attr('width', 300);
+            canvas.attr('height', 300);
+            canvas.css('float', 'left');
+            var context = canvas[0].getContext("2d");
+            var buf = context.createImageData(300, 300);
+            var ints = buf.data;
 
-        var input = new Uint8Array(data);
-        var pushWhite = function (index) {
-            ints[index * 4] = 255;
-            ints[index * 4 + 1] = 255;
-            ints[index * 4 + 2] = 255;
-            ints[index * 4 + 3] = 255;
-        };
-        var pushBlack = function (index) {
-            ints[index * 4] = 0;
-            ints[index * 4 + 1] = 0;
-            ints[index * 4 + 2] = 0;
-            ints[index * 4 + 3] = 255;
-        };
+            var input = new Uint8Array(data);
+            var pushWhite = function (index) {
+                ints[index * 4] = 255;
+                ints[index * 4 + 1] = 255;
+                ints[index * 4 + 2] = 255;
+                ints[index * 4 + 3] = 255;
+            };
+            var pushBlack = function (index) {
+                ints[index * 4] = 0;
+                ints[index * 4 + 1] = 0;
+                ints[index * 4 + 2] = 0;
+                ints[index * 4 + 3] = 255;
+            };
 
-        var b;
-        for (var i = 0; i < input.length; i++) {
-            b = input[i];
-            if (b & 1) {
-                pushBlack(i * 8)
-            } else {
-                pushWhite(i * 8)
+            var b;
+            for (var i = 0; i < input.length; i++) {
+                b = input[i];
+                if (b & 1) {
+                    pushBlack(i * 8)
+                } else {
+                    pushWhite(i * 8)
+                }
+                if (b & 2) {
+                    pushBlack(i * 8 + 1)
+                } else {
+                    pushWhite(i * 8 + 1)
+                }
+                if (b & 4) {
+                    pushBlack(i * 8 + 2)
+                } else {
+                    pushWhite(i * 8 + 2)
+                }
+                if (b & 8) {
+                    pushBlack(i * 8 + 3)
+                } else {
+                    pushWhite(i * 8 + 3)
+                }
+                if (b & 16) {
+                    pushBlack(i * 8 + 4)
+                } else {
+                    pushWhite(i * 8 + 4)
+                }
+                if (b & 32) {
+                    pushBlack(i * 8 + 5)
+                } else {
+                    pushWhite(i * 8 + 5)
+                }
+                if (b & 64) {
+                    pushBlack(i * 8 + 6)
+                } else {
+                    pushWhite(i * 8 + 6)
+                }
+                if (b & 128) {
+                    pushBlack(i * 8 + 7)
+                } else {
+                    pushWhite(i * 8 + 7)
+                }
             }
-            if (b & 2) {
-                pushBlack(i * 8 + 1)
-            } else {
-                pushWhite(i * 8 + 1)
-            }
-            if (b & 4) {
-                pushBlack(i * 8 + 2)
-            } else {
-                pushWhite(i * 8 + 2)
-            }
-            if (b & 8) {
-                pushBlack(i * 8 + 3)
-            } else {
-                pushWhite(i * 8 + 3)
-            }
-            if (b & 16) {
-                pushBlack(i * 8 + 4)
-            } else {
-                pushWhite(i * 8 + 4)
-            }
-            if (b & 32) {
-                pushBlack(i * 8 + 5)
-            } else {
-                pushWhite(i * 8 + 5)
-            }
-            if (b & 64) {
-                pushBlack(i * 8 + 6)
-            } else {
-                pushWhite(i * 8 + 6)
-            }
-            if (b & 128) {
-                pushBlack(i * 8 + 7)
-            } else {
-                pushWhite(i * 8 + 7)
-            }
+
+            canvas.width = canvas.width;
+            context.putImageData(buf, 0, 0);
+            canvas.click(function(){
+                var pad = $("#canvas")[0];
+                pad.getContext("2d").putImageData(context.getImageData(0,0,300,300),0,0);
+            })
         }
 
-        canvas.width = canvas.width;
-        context.putImageData(buf, 0, 0);
-        canvas.click(function(){
-            var pad = $("#canvas")[0];
-            pad.getContext("2d").putImageData(context.getImageData(0,0,300,300),0,0);
-        })
     }
     var canvas = $("#canvas")[0];
     var context = canvas.getContext("2d");
@@ -129,16 +141,24 @@ $(function () {
     }
 
     $('#canvas').mousedown(function (e) {
-        var mouseX = e.pageX - this.offsetLeft;
-        var mouseY = e.pageY - this.offsetTop;
+        e.preventDefault();
+        e.stopPropagation();
+
+        // you can change the cursor if you want
+        // just remember to handle the mouse up and put it back :)
+        e.target.style.pointer = 'move';
+        var mouseX = e.pageX - this.offsetLeft - 11;
+        var mouseY = e.pageY - this.offsetTop - 11;
         paint = true;
-        addClick(e.pageX - this.offsetLeft, e.pageY - this.offsetTop);
+        addClick(mouseX, mouseY);
         redraw();
     });
 
     $('#canvas').mousemove(function (e) {
         if (paint) {
-            addClick(e.pageX - this.offsetLeft, e.pageY - this.offsetTop, true);
+            var mouseX = e.pageX - this.offsetLeft - 11;
+            var mouseY = e.pageY - this.offsetTop - 11;
+            addClick(mouseX, mouseY, true);
             redraw();
         }
     });
@@ -154,6 +174,9 @@ $(function () {
     $('#canvas').mouseleave(function (e) {
         paint = false;
     });
+
+    $('#canvas').onselectstart = function () { return false; };
+    $('#canvas').onmousedown = function () { return false; };
 
     $("#send").click(function () {
         var im = context.getImageData(0, 0, canvas.width, canvas.height);

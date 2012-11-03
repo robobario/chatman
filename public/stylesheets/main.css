@@ -1,0 +1,40 @@
+#header {
+    width:100%;
+    height:1em;
+    padding:0.38em;
+    background: #333444;
+}
+
+body {
+    font-family: monospace
+}
+
+h6 {
+    display:inline-block;
+    color:white;
+}
+
+.floatRight {
+    float:right;
+}
+
+.whiteText {
+    color:white;
+}
+
+#canvas {
+    border: solid;
+    border-width: 10px;
+    border-color:#333445;
+    border-radius:22px;
+}
+
+#canvas-buttons {
+    padding-left: 11px;
+    padding-right: 11px;
+}
+
+button {
+    float:left;
+    font-family: monospace
+}
